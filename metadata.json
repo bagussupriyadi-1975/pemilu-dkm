@@ -1,0 +1,8 @@
+{
+  "name": "Pemilihan Ketua Masjid Digital",
+  "description": "Sistem Pemilihan Ketua DKM & Pengurus Masjid Nurul Hidayah Kel. Kuripan, Kec. Telukbetung Barat, Kota Bandar Lampung dengan Bilik Suara Token Unik, Data Jamaah KTP/KK RT 03-05 Lk.II, Live Quick Count, dan Berita Acara Resmi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
