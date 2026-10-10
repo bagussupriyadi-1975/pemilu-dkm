@@ -66,8 +66,8 @@ const DEFAULT_SCHOOL: School = {
   lingkungan_name:
     'Lingkungan II (RT.03, RT.04, RT.05) Kel. Kuripan, Kec. Telukbetung Barat, Kota Bandar Lampung',
   booth_lock_mode: 'auto',
-  voting_start_datetime: '2026-10-18T08:00',
-  voting_end_datetime: '2026-10-18T14:00',
+  voting_start_datetime: '2026-10-30T19:46',
+  voting_end_datetime: '2026-10-30T23:30',
   voting_location:
     'Ruang Utama Masjid Nurul Hidayah, Jl. Timor Gg. Masjid RT.04 Lk.II Kel. Kuripan, Bandar Lampung',
 };
@@ -1351,6 +1351,9 @@ export async function syncFromSupabase(): Promise<boolean> {
       } catch {
         cloudSnap = null;
       }
+    } else {
+      // Jika belum ada snapshot extended di Supabase, simpan snapshot saat ini
+      saveCloudSnapshotToSupabase();
     }
 
     isSyncingRemote = true;

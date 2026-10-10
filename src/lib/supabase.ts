@@ -22,7 +22,13 @@ try {
   // ignore
 }
 
-// Baca URL dan Anon Key dari Environment Variables atau LocalStorage
+// Kredensial bawaan Cloud Supabase resmi DKM Nurul Hidayah (Public Anon Key)
+// Memastikan aplikasi di AI Studio maupun Vercel (pemilu-dkm.vercel.app) otomatis terhubung di semua perangkat/akun
+export const DEFAULT_DKM_SUPABASE_URL = 'https://nrpjgkocqvgczorwrayr.supabase.co';
+export const DEFAULT_DKM_SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ycGpna29jcXZnY3pvcndyYXlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNzMxMzgsImV4cCI6MjEwNjg0OTEzOH0.-u0CPTNEC9R7X3rD79ox4U4_Setdnh-sVbgzlnO1EBY';
+
+// Baca URL dan Anon Key dari LocalStorage, Environment Variables, atau Default DKM Nurul Hidayah
 export function getSupabaseConfig(): { url: string; key: string; isConfigured: boolean; source: 'env' | 'custom' | 'none' } {
   const customUrl = (localStorage.getItem('epilketos_custom_supabase_url') || '').trim();
   const customKey = (localStorage.getItem('epilketos_custom_supabase_key') || '').trim();
@@ -43,6 +49,15 @@ export function getSupabaseConfig(): { url: string; key: string; isConfigured: b
     return {
       url: envUrl,
       key: envKey,
+      isConfigured: true,
+      source: 'env',
+    };
+  }
+
+  if (DEFAULT_DKM_SUPABASE_URL && DEFAULT_DKM_SUPABASE_ANON_KEY) {
+    return {
+      url: DEFAULT_DKM_SUPABASE_URL,
+      key: DEFAULT_DKM_SUPABASE_ANON_KEY,
       isConfigured: true,
       source: 'env',
     };

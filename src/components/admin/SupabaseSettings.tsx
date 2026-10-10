@@ -52,9 +52,34 @@ export const SupabaseSettings: React.FC = () => {
   const [copiedVercelLink, setCopiedVercelLink] = useState(false);
   const [copiedCurrentLink, setCopiedCurrentLink] = useState(false);
   const [copiedEnvVars, setCopiedEnvVars] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showSqlViewer, setShowSqlViewer] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+
+  const copyToClipboard = (text: string, fieldId: string) => {
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      textArea.style.top = '0';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    } catch {
+      // ignore fallback error
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {});
+    }
+    setCopiedField(fieldId);
+    setTimeout(() => {
+      setCopiedField((prev) => (prev === fieldId ? null : prev));
+    }, 2500);
+  };
 
   useEffect(() => {
     const current = db.getSupabaseStatus();
@@ -431,34 +456,52 @@ SELECT id, name, principal_name, address FROM public.schools;`;
           </div>
         </div>
 
+        {/* Info Otomatis Terhubung */}
+        <div className="p-3.5 rounded-xl bg-emerald-500/20 border border-emerald-400/50 text-xs text-emerald-50 leading-relaxed flex items-start gap-2.5">
+          <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0 mt-0.5" />
+          <div>
+            <strong className="text-amber-300">KABAR BAIK (OTOMATIS AKTIF TANPA RIBET):</strong>{' '}
+            Kredensial Cloud Supabase DKM Nurul Hidayah Anda (
+            <code className="bg-black/30 px-1.5 py-0.5 rounded font-mono text-emerald-200">
+              https://nrpjgkocqvgczorwrayr.supabase.co
+            </code>
+            ) kini <strong>sudah ditanam langsung secara otomatis di dalam kode aplikasi ini</strong>. Artinya, meskipun Anda <strong>tidak mengisi Environment Variables</strong>, begitu kode ini Anda <strong>Update/Sync ke GitHub</strong>, maka link{' '}
+            <strong>pemilu-dkm.vercel.app</strong> maupun link <strong>AI Studio</strong> akan langsung terhubung otomatis secara Real-Time di semua HP &amp; akun!
+          </div>
+        </div>
+
         {supabaseStatus.isActive && urlInput && keyInput ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-1">
             {/* Cara 1: Link Sinkronisasi Otomatis 1-Klik */}
-            <div className="bg-white/10 backdrop-blur-xs border border-white/15 rounded-xl p-4 space-y-2.5">
+            <div className="bg-white/10 backdrop-blur-xs border border-white/15 rounded-xl p-4 space-y-3">
               <div className="flex items-center gap-2 text-amber-300 font-extrabold text-xs uppercase tracking-wider">
                 <Link2 className="w-4 h-4 shrink-0" />
                 <span>Cara 1 (Instan): Bagikan Link Sinkronisasi 1-Klik</span>
               </div>
               <p className="text-[11px] text-emerald-100 leading-relaxed">
-                Buka atau bagikan link ini ke akun/HP lain. Begitu dibuka sekali saja, perangkat tersebut <strong>otomatis menyimpan koneksi Cloud Supabase Anda</strong> dan langsung tersinkronisasi Real-Time:
+                Jika Anda belum sempat update GitHub, cukup salin dan buka link di bawah ini di akun/HP lain. Begitu dibuka sekali saja, perangkat tersebut <strong>otomatis menyimpan koneksi Cloud Supabase Anda</strong> dan langsung tersinkronisasi Real-Time:
               </p>
-              <div className="flex flex-wrap gap-2 pt-1">
+              <div className="flex flex-col gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => {
                     const magicVercelUrl = `https://pemilu-dkm.vercel.app/?sb_url=${encodeURIComponent(
                       urlInput.trim()
                     )}&sb_key=${encodeURIComponent(keyInput.trim())}`;
-                    navigator.clipboard.writeText(magicVercelUrl);
+                    copyToClipboard(magicVercelUrl, 'vercel_magic_link');
                     setCopiedVercelLink(true);
                     setTimeout(() => setCopiedVercelLink(false), 3000);
                   }}
-                  className="px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs flex items-center gap-1.5 cursor-pointer transition-all"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-xs"
                 >
-                  {copiedVercelLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedVercelLink || copiedField === 'vercel_magic_link' ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
                   <span>
-                    {copiedVercelLink
-                      ? 'Link Vercel Tersalin!'
+                    {copiedVercelLink || copiedField === 'vercel_magic_link'
+                      ? '✓ Link Auto-Sync Vercel Berhasil Disalin!'
                       : 'Salin Link Auto-Sync Vercel (pemilu-dkm.vercel.app)'}
                   </span>
                 </button>
@@ -469,15 +512,21 @@ SELECT id, name, principal_name, address FROM public.schools;`;
                     const magicOriginUrl = `${window.location.origin}/?sb_url=${encodeURIComponent(
                       urlInput.trim()
                     )}&sb_key=${encodeURIComponent(keyInput.trim())}`;
-                    navigator.clipboard.writeText(magicOriginUrl);
+                    copyToClipboard(magicOriginUrl, 'origin_magic_link');
                     setCopiedCurrentLink(true);
                     setTimeout(() => setCopiedCurrentLink(false), 3000);
                   }}
-                  className="px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all"
+                  className="w-full px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all"
                 >
-                  {copiedCurrentLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedCurrentLink || copiedField === 'origin_magic_link' ? (
+                    <Check className="w-3.5 h-3.5" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
                   <span>
-                    {copiedCurrentLink ? 'Link Tersalin!' : 'Salin Link Auto-Sync Domain Ini'}
+                    {copiedCurrentLink || copiedField === 'origin_magic_link'
+                      ? '✓ Link Domain Ini Berhasil Disalin!'
+                      : 'Salin Link Auto-Sync Domain Ini'}
                   </span>
                 </button>
               </div>
@@ -485,51 +534,134 @@ SELECT id, name, principal_name, address FROM public.schools;`;
 
             {/* Cara 2: Pasang Permanen di Vercel Environment Variables */}
             <div className="bg-white/10 backdrop-blur-xs border border-white/15 rounded-xl p-4 space-y-2.5">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <span className="text-emerald-300 font-extrabold text-xs uppercase tracking-wider">
-                  Cara 2 (Permanen di Dashboard Vercel.com):
+                  Cara 2 (Salin Key &amp; Value untuk Environment Variables):
                 </span>
                 <button
                   type="button"
                   onClick={() => {
                     const envText = `VITE_SUPABASE_URL=${urlInput.trim()}\nVITE_SUPABASE_ANON_KEY=${keyInput.trim()}`;
-                    navigator.clipboard.writeText(envText);
+                    copyToClipboard(envText, 'env_all');
                     setCopiedEnvVars(true);
                     setTimeout(() => setCopiedEnvVars(false), 3000);
                   }}
                   className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
                 >
-                  {copiedEnvVars ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                  <span>{copiedEnvVars ? 'Tersalin Semua!' : 'Salin Format .env'}</span>
+                  {copiedEnvVars || copiedField === 'env_all' ? (
+                    <Check className="w-3 h-3" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
+                  <span>
+                    {copiedEnvVars || copiedField === 'env_all'
+                      ? '✓ Tersalin Semua!'
+                      : 'Salin Sekaligus (.env)'}
+                  </span>
                 </button>
               </div>
-              <p className="text-[11px] text-emerald-100 leading-relaxed">
-                Di halaman <strong>Environment Variables</strong> (di dashboard <strong>vercel.com</strong>), masukkan 2 baris variabel berikut (bisa langsung klik Salin Format .env lalu Paste di kotak Key Vercel, atau isi satu per satu), lalu klik <strong>Save</strong> dan lakukan <strong>Redeploy</strong>:
-              </p>
-              <div className="space-y-1.5 text-[10px] font-mono bg-slate-950/90 p-2.5 rounded-lg border border-slate-800">
-                <div className="flex items-center justify-between gap-2 text-emerald-300">
-                  <span className="truncate">
-                    <strong>Key 1:</strong> VITE_SUPABASE_URL
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => navigator.clipboard.writeText(urlInput.trim())}
-                    className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white font-sans font-bold cursor-pointer shrink-0"
-                  >
-                    Salin Value URL
-                  </button>
+
+              <div className="space-y-2 text-[11px] bg-slate-950/90 p-3 rounded-xl border border-slate-800">
+                {/* VARIABEL 1 */}
+                <div className="space-y-1.5 pb-2 border-b border-slate-800">
+                  <div className="text-[10px] font-extrabold text-emerald-400 uppercase">
+                    Variabel Pertama (URL Project Supabase):
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 w-14 shrink-0">Key 1:</span>
+                    <input
+                      type="text"
+                      readOnly
+                      value="VITE_SUPABASE_URL"
+                      onClick={(e) => e.currentTarget.select()}
+                      className="flex-1 bg-slate-900 text-emerald-300 font-mono text-[11px] px-2 py-1 rounded border border-slate-700 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard('VITE_SUPABASE_URL', 'key_1')}
+                      className={`px-2.5 py-1 rounded font-bold text-[10px] flex items-center gap-1 cursor-pointer shrink-0 transition-all ${
+                        copiedField === 'key_1'
+                          ? 'bg-emerald-500 text-slate-950'
+                          : 'bg-emerald-700 hover:bg-emerald-600 text-white'
+                      }`}
+                    >
+                      {copiedField === 'key_1' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedField === 'key_1' ? 'Tersalin!' : 'Salin Key 1'}</span>
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 w-14 shrink-0">Value 1:</span>
+                    <input
+                      type="text"
+                      readOnly
+                      value={urlInput.trim()}
+                      onClick={(e) => e.currentTarget.select()}
+                      className="flex-1 bg-slate-900 text-white font-mono text-[11px] px-2 py-1 rounded border border-slate-700 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(urlInput.trim(), 'val_1')}
+                      className={`px-2.5 py-1 rounded font-bold text-[10px] flex items-center gap-1 cursor-pointer shrink-0 transition-all ${
+                        copiedField === 'val_1'
+                          ? 'bg-emerald-500 text-slate-950'
+                          : 'bg-white/15 hover:bg-white/25 text-white'
+                      }`}
+                    >
+                      {copiedField === 'val_1' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedField === 'val_1' ? 'Tersalin!' : 'Salin Value 1'}</span>
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between gap-2 text-amber-300 pt-1 border-t border-slate-800/80">
-                  <span className="truncate">
-                    <strong>Key 2:</strong> VITE_SUPABASE_ANON_KEY
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => navigator.clipboard.writeText(keyInput.trim())}
-                    className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white font-sans font-bold cursor-pointer shrink-0"
-                  >
-                    Salin Value Key
-                  </button>
+
+                {/* VARIABEL 2 */}
+                <div className="space-y-1.5 pt-0.5">
+                  <div className="text-[10px] font-extrabold text-amber-400 uppercase">
+                    Variabel Kedua (Anon Public Key Supabase):
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 w-14 shrink-0">Key 2:</span>
+                    <input
+                      type="text"
+                      readOnly
+                      value="VITE_SUPABASE_ANON_KEY"
+                      onClick={(e) => e.currentTarget.select()}
+                      className="flex-1 bg-slate-900 text-amber-300 font-mono text-[11px] px-2 py-1 rounded border border-slate-700 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard('VITE_SUPABASE_ANON_KEY', 'key_2')}
+                      className={`px-2.5 py-1 rounded font-bold text-[10px] flex items-center gap-1 cursor-pointer shrink-0 transition-all ${
+                        copiedField === 'key_2'
+                          ? 'bg-amber-400 text-slate-950'
+                          : 'bg-amber-600 hover:bg-amber-500 text-white'
+                      }`}
+                    >
+                      {copiedField === 'key_2' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedField === 'key_2' ? 'Tersalin!' : 'Salin Key 2'}</span>
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 w-14 shrink-0">Value 2:</span>
+                    <input
+                      type="text"
+                      readOnly
+                      value={keyInput.trim()}
+                      onClick={(e) => e.currentTarget.select()}
+                      className="flex-1 bg-slate-900 text-white font-mono text-[11px] px-2 py-1 rounded border border-slate-700 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(keyInput.trim(), 'val_2')}
+                      className={`px-2.5 py-1 rounded font-bold text-[10px] flex items-center gap-1 cursor-pointer shrink-0 transition-all ${
+                        copiedField === 'val_2'
+                          ? 'bg-amber-400 text-slate-950'
+                          : 'bg-white/15 hover:bg-white/25 text-white'
+                      }`}
+                    >
+                      {copiedField === 'val_2' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedField === 'val_2' ? 'Tersalin!' : 'Salin Value 2'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
