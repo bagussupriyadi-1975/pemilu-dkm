@@ -37,6 +37,17 @@ export const PAPER_DIMENSIONS: Record<PaperSizeOption, PaperDimensions> = {
 };
 
 /**
+ * Helper membagi array menjadi potongan per halaman
+ */
+function chunkArray<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+}
+
+/**
  * Helper memuat gambar URL menjadi Base64 Data URL agar dapat dirender di dalam PDF A4
  */
 async function loadImageAsDataUrl(url: string): Promise<string | null> {

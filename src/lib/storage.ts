@@ -17,6 +17,7 @@ import {
   isSupabaseActive,
   setupRealtimeSubscription,
   getSupabaseConfig,
+  saveCustomSupabaseConfig,
   testSupabaseConnection,
 } from './supabase';
 
@@ -29,7 +30,11 @@ const STORAGE_KEYS = {
   VOTES: 'epilketmas_nh_votes_v6',
   AUDIT_LOGS: 'epilketmas_nh_audit_logs_v6',
   USERS: 'epilketmas_nh_users_v6',
+  LAST_UPDATED: 'epilketmas_nh_last_updated_v7',
+  CLEANED_DEMO_V7: 'epilketmas_nh_cleaned_demo_v7',
 };
+
+const CLOUD_SNAPSHOT_ID = '__DKM_CLOUD_SNAPSHOT_V7__';
 
 // Generator Pool 300 Token Resmi (NH0001 s.d NH0300)
 export const ALL_300_TOKENS: string[] = Array.from({ length: 300 }, (_, i) =>
@@ -237,19 +242,9 @@ const DEFAULT_PERIODS: ElectionPeriod[] = [
     period_name: 'Pemilihan Ketua Dewan Kemakmuran Masjid (DKM) Nurul Hidayah',
     academic_year: '2026 - 2028',
     status: 'aktif',
-    start_date: '2026-10-05T07:30:00.000Z',
-    end_date: '2026-10-05T22:00:00.000Z',
+    start_date: '2026-10-18T08:00:00.000Z',
+    end_date: '2026-10-18T14:00:00.000Z',
     created_at: '2026-10-01T08:00:00.000Z',
-  },
-  {
-    id: 'period-2023',
-    school_id: 'sch-01',
-    period_name: 'Pemilihan Ketua Dewan Kemakmuran Masjid (DKM) Nurul Hidayah',
-    academic_year: '2023 - 2025',
-    status: 'selesai',
-    start_date: '2023-09-15T07:30:00.000Z',
-    end_date: '2023-09-15T15:00:00.000Z',
-    created_at: '2023-09-01T08:00:00.000Z',
   },
 ];
 
@@ -334,7 +329,7 @@ const DEFAULT_CANDIDATES: Candidate[] = [
       'Kajian Rutin Pekanan, Pembinaan Majelis Taklim & Remaja Masjid (RISMA)',
       'Program Santunan Yatim, Dhuafa & Sosial Kemasyarakatan',
     ],
-    video_url: 'https://www.youtube.com',
+    video_url: '',
     color_theme: 'emerald',
   },
   {
@@ -359,7 +354,7 @@ const DEFAULT_CANDIDATES: Candidate[] = [
       'Revitalisasi Sound System, Penyejuk Ruangan & Kebersihan Terpadu Masjid',
       'Semarak PHBI (Peringatan Hari Besar Islam) & Gebyar Ramadhan',
     ],
-    video_url: 'https://www.youtube.com',
+    video_url: '',
     color_theme: 'blue',
   },
   {
@@ -384,7 +379,7 @@ const DEFAULT_CANDIDATES: Candidate[] = [
       'Manajemen Panitia Qurban & Zakat Fitrah Terpadu',
       'Forum Musyawarah Jamaah Berkala Lingkungan II',
     ],
-    video_url: 'https://www.youtube.com',
+    video_url: '',
     color_theme: 'purple',
   },
 ];
@@ -428,7 +423,7 @@ const INITIAL_VOTERS_RAW: RawJamaahSeed[] = [
     occupation: 'Wiraswasta',
     phone: '081272003001',
     token: 'NH0001',
-    voted: true,
+    voted: false,
   },
   {
     nik: '1871031405700002',
@@ -442,7 +437,7 @@ const INITIAL_VOTERS_RAW: RawJamaahSeed[] = [
     occupation: 'Karyawan Swasta',
     phone: '081272003002',
     token: 'NH0002',
-    voted: true,
+    voted: false,
   },
   {
     nik: '1871032108650003',
@@ -456,7 +451,7 @@ const INITIAL_VOTERS_RAW: RawJamaahSeed[] = [
     occupation: 'Ustadz / Pengajar',
     phone: '081272003003',
     token: 'NH0003',
-    voted: true,
+    voted: false,
   },
   {
     nik: '1871031111820004',
@@ -528,7 +523,7 @@ const INITIAL_VOTERS_RAW: RawJamaahSeed[] = [
     occupation: 'Wiraswasta',
     phone: '081272004002',
     token: 'NH0008',
-    voted: true,
+    voted: false,
   },
   {
     nik: '1871031206720009',
@@ -542,7 +537,7 @@ const INITIAL_VOTERS_RAW: RawJamaahSeed[] = [
     occupation: 'Karyawan Swasta',
     phone: '081272004003',
     token: 'NH0009',
-    voted: true,
+    voted: false,
   },
   {
     nik: '1871032509800010',
@@ -570,7 +565,7 @@ const INITIAL_VOTERS_RAW: RawJamaahSeed[] = [
     occupation: 'Wiraswasta',
     phone: '081272004005',
     token: 'NH0011',
-    voted: true,
+    voted: false,
   },
   {
     nik: '1871031501690012',
@@ -584,7 +579,7 @@ const INITIAL_VOTERS_RAW: RawJamaahSeed[] = [
     occupation: 'Ustadz / Penceramah',
     phone: '081272004006',
     token: 'NH0012',
-    voted: true,
+    voted: false,
   },
   {
     nik: '1871032204750013',
@@ -670,7 +665,7 @@ const INITIAL_VOTERS_RAW: RawJamaahSeed[] = [
     occupation: 'Wiraswasta / Ketua DKM',
     phone: '081272005001',
     token: 'NH0018',
-    voted: true,
+    voted: false,
   },
   {
     nik: '1871030609680019',
@@ -684,7 +679,7 @@ const INITIAL_VOTERS_RAW: RawJamaahSeed[] = [
     occupation: 'Ustadz / Tokoh Agama',
     phone: '081272005002',
     token: 'NH0019',
-    voted: true,
+    voted: false,
   },
   {
     nik: '1871031412770020',
@@ -712,7 +707,7 @@ const INITIAL_VOTERS_RAW: RawJamaahSeed[] = [
     occupation: 'Insinyur / Konsultan',
     phone: '081272005004',
     token: 'NH0021',
-    voted: true,
+    voted: false,
   },
   {
     nik: '1871030308700022',
@@ -820,80 +815,16 @@ function generateInitialVoters(): Voter[] {
     is_kk_representative: true,
     pin_plain: item.token,
     pin_hash: item.token,
-    has_voted: item.voted,
-    voted_at: item.voted
-      ? new Date(Date.now() - (12 - (idx % 10)) * 12 * 60 * 1000).toISOString()
-      : null,
+    has_voted: false,
+    voted_at: null,
   }));
 }
 
 function generateInitialVotes(): Vote[] {
-  // 10 suara awal sesuai 10 jamaah yang voted: true
-  const candidateDistribution = [
-    'cand-01',
-    'cand-01',
-    'cand-02',
-    'cand-01',
-    'cand-03',
-    'cand-02',
-    'cand-01',
-    'cand-02',
-    'cand-03',
-    'cand-01',
-  ];
-  return candidateDistribution.map((candId, idx) => ({
-    id: `vote-${idx + 1}`,
-    election_period_id: 'period-2026',
-    candidate_id: candId,
-    created_at: new Date(Date.now() - (10 - idx) * 12 * 60 * 1000).toISOString(),
-  }));
+  return [];
 }
 
-const DEFAULT_AUDIT_LOGS: AuditLog[] = [
-  {
-    id: 'log-01',
-    election_period_id: 'period-2026',
-    user_id: 'bagus.supriyadi.tbb@gmail.com',
-    user_role: 'Admin Utama DKM',
-    action: 'INIT_MASJID_CONFIG',
-    details:
-      'Mengatur profil Masjid Nurul Hidayah (RT.03, RT.04, RT.05 Lk.II Kel. Kuripan, Telukbetung Barat, Bandar Lampung)',
-    ip_address: '192.168.1.10',
-    timestamp: '2026-10-05T07:00:00.000Z',
-  },
-  {
-    id: 'log-02',
-    election_period_id: 'period-2026',
-    user_id: 'bagus.supriyadi.tbb@gmail.com',
-    user_role: 'Admin Utama DKM',
-    action: 'UPLOAD_SK_COMMITTEE',
-    details: 'Menerbitkan SK Panitia Pemilihan Ketua Masjid No. 001/SK-PAN/DKM-NH/X/2026',
-    ip_address: '192.168.1.10',
-    timestamp: '2026-10-05T07:15:00.000Z',
-  },
-  {
-    id: 'log-03',
-    election_period_id: 'period-2026',
-    user_id: 'yodi.purnawan@nurulhidayah.id',
-    user_role: 'Panitia Pemilihan',
-    action: 'IMPORT_DPT_JAMAAH',
-    details:
-      'Memuat 27 data Kepala Keluarga / Jamaah (RT.03, RT.04, RT.05 Lk.II) lengkap dengan data KTP & Token Suara',
-    ip_address: '192.168.1.44',
-    timestamp: '2026-10-05T07:25:00.000Z',
-  },
-  {
-    id: 'log-04',
-    election_period_id: 'period-2026',
-    user_id: 'bagus.supriyadi.tbb@gmail.com',
-    user_role: 'Admin Utama DKM',
-    action: 'ACTIVATE_PERIOD',
-    details:
-      'Mengaktifkan Pemungutan Suara Pemilihan Ketua Masjid Nurul Hidayah dengan metode Token PIN Unik',
-    ip_address: '192.168.1.10',
-    timestamp: '2026-10-05T07:30:00.000Z',
-  },
-];
+const DEFAULT_AUDIT_LOGS: AuditLog[] = [];
 
 // AKUN ADMIN UTAMA & PANITIA PEMILIHAN DARI DAFTAR JAMAAH MASJID NURUL HIDAYAH
 const DEFAULT_USERS: AppUser[] = [
@@ -983,6 +914,269 @@ function setItem<T>(key: string, val: T): void {
   }
 }
 
+let lastKnownUpdatedAt = 0;
+let isSyncingRemote = false;
+
+function getLocalUpdatedAt(): number {
+  const raw = localStorage.getItem(STORAGE_KEYS.LAST_UPDATED);
+  return raw ? Number(raw) || 0 : 0;
+}
+
+function markLocalUpdated(): number {
+  const now = Date.now();
+  lastKnownUpdatedAt = now;
+  try {
+    localStorage.setItem(STORAGE_KEYS.LAST_UPDATED, String(now));
+  } catch {
+    // ignore
+  }
+  return now;
+}
+
+// Bersihkan sisa data dummy/simulasi lama (vote-1..vote-10, period-2023, link video dummy) tanpa menghapus 27 data Jamaah asli
+function cleanLegacyDummyData(): void {
+  try {
+    if (localStorage.getItem(STORAGE_KEYS.CLEANED_DEMO_V7) === 'true') return;
+
+    // 1. Bersihkan periode dummy 2023 jika ada
+    const periods = getItem<ElectionPeriod[]>(STORAGE_KEYS.PERIODS, DEFAULT_PERIODS);
+    const cleanedPeriods = periods.filter((p) => p.id !== 'period-2023');
+    setItem(STORAGE_KEYS.PERIODS, cleanedPeriods.length > 0 ? cleanedPeriods : DEFAULT_PERIODS);
+
+    // 2. Bersihkan link video dummy RickRoll pada kandidat jika masih ada
+    const candidates = getItem<Candidate[]>(STORAGE_KEYS.CANDIDATES, DEFAULT_CANDIDATES);
+    const cleanedCandidates = candidates.map((c) => ({
+      ...c,
+      video_url:
+        c.video_url && c.video_url.includes('dQw4w9WgXcQ') ? '' : c.video_url,
+    }));
+    setItem(STORAGE_KEYS.CANDIDATES, cleanedCandidates);
+
+    // 3. Cek apakah suara yang tersimpan adalah suara simulasi awal (vote-1 s/d vote-10)
+    const dummyVoteIds = new Set([
+      'vote-1',
+      'vote-2',
+      'vote-3',
+      'vote-4',
+      'vote-5',
+      'vote-6',
+      'vote-7',
+      'vote-8',
+      'vote-9',
+      'vote-10',
+    ]);
+    const votes = getItem<Vote[]>(STORAGE_KEYS.VOTES, []);
+    const hadDummyVotes = votes.some((v) => dummyVoteIds.has(v.id));
+    const realVotes = votes.filter((v) => !dummyVoteIds.has(v.id));
+    setItem(STORAGE_KEYS.VOTES, realVotes);
+
+    // Jika sebelumnya terdapat suara dummy dan belum ada suara asli, pastikan seluruh jamaah berstatus Belum Memilih (Siap Pakai)
+    const voters = getItem<Voter[]>(STORAGE_KEYS.VOTERS, generateInitialVoters());
+    const cleanedVoters = voters.map((v) => {
+      const normalizedUnsur = normalizeUnsurJamaah(v.unsur);
+      if (hadDummyVotes && realVotes.length === 0) {
+        return {
+          ...v,
+          unsur: normalizedUnsur,
+          has_voted: false,
+          voted_at: null,
+        };
+      }
+      return {
+        ...v,
+        unsur: normalizedUnsur,
+      };
+    });
+    setItem(STORAGE_KEYS.VOTERS, cleanedVoters);
+
+    // 4. Bersihkan log audit simulasi lama (log-1, log-2, log-3)
+    const logs = getItem<AuditLog[]>(STORAGE_KEYS.AUDIT_LOGS, DEFAULT_AUDIT_LOGS);
+    const cleanedLogs = logs.filter(
+      (l) => l.id !== 'log-1' && l.id !== 'log-2' && l.id !== 'log-3' && l.id !== CLOUD_SNAPSHOT_ID
+    );
+    setItem(
+      STORAGE_KEYS.AUDIT_LOGS,
+      cleanedLogs.length > 0 ? cleanedLogs : DEFAULT_AUDIT_LOGS
+    );
+
+    localStorage.setItem(STORAGE_KEYS.CLEANED_DEMO_V7, 'true');
+  } catch (err) {
+    console.warn('Cleanup legacy dummy data warning:', err);
+  }
+}
+
+function buildFullSnapshot() {
+  const sbConfig = getSupabaseConfig();
+  return {
+    updated_at: getLocalUpdatedAt() || Date.now(),
+    school: getItem(STORAGE_KEYS.SCHOOL, DEFAULT_SCHOOL),
+    periods: getItem(STORAGE_KEYS.PERIODS, DEFAULT_PERIODS),
+    committees: getItem(STORAGE_KEYS.COMMITTEES, DEFAULT_COMMITTEES),
+    candidates: getItem(STORAGE_KEYS.CANDIDATES, DEFAULT_CANDIDATES),
+    voters: getItem(STORAGE_KEYS.VOTERS, generateInitialVoters()),
+    votes: getItem(STORAGE_KEYS.VOTES, generateInitialVotes()),
+    audit_logs: getItem<AuditLog[]>(STORAGE_KEYS.AUDIT_LOGS, DEFAULT_AUDIT_LOGS)
+      .filter((l) => l.id !== CLOUD_SNAPSHOT_ID)
+      .slice(0, 100),
+    users: getItem(STORAGE_KEYS.USERS, DEFAULT_USERS),
+    supabase_config: sbConfig.isConfigured
+      ? { url: sbConfig.url, key: sbConfig.key }
+      : undefined,
+  };
+}
+
+function applyFullSnapshot(snapshot: any, notifyEvents = true): boolean {
+  if (!snapshot || typeof snapshot !== 'object') return false;
+  const incomingUpdatedAt = Number(snapshot.updated_at || 0);
+  const currentUpdatedAt = getLocalUpdatedAt();
+
+  if (incomingUpdatedAt > 0 && currentUpdatedAt > 0 && incomingUpdatedAt < currentUpdatedAt) {
+    return false;
+  }
+
+  isSyncingRemote = true;
+  try {
+    if (snapshot.school) setItem(STORAGE_KEYS.SCHOOL, { ...DEFAULT_SCHOOL, ...snapshot.school });
+    if (Array.isArray(snapshot.periods) && snapshot.periods.length > 0) {
+      setItem(STORAGE_KEYS.PERIODS, snapshot.periods);
+    }
+    if (Array.isArray(snapshot.committees)) {
+      setItem(STORAGE_KEYS.COMMITTEES, snapshot.committees);
+    }
+    if (Array.isArray(snapshot.candidates)) {
+      setItem(STORAGE_KEYS.CANDIDATES, snapshot.candidates);
+    }
+    if (Array.isArray(snapshot.voters) && snapshot.voters.length > 0) {
+      setItem(
+        STORAGE_KEYS.VOTERS,
+        snapshot.voters.map((v: Voter) => ({
+          ...v,
+          unsur: normalizeUnsurJamaah(v.unsur),
+        }))
+      );
+    }
+    if (Array.isArray(snapshot.votes)) {
+      setItem(STORAGE_KEYS.VOTES, snapshot.votes);
+    }
+    if (Array.isArray(snapshot.audit_logs)) {
+      setItem(
+        STORAGE_KEYS.AUDIT_LOGS,
+        snapshot.audit_logs.filter((l: AuditLog) => l.id !== CLOUD_SNAPSHOT_ID)
+      );
+    }
+    if (Array.isArray(snapshot.users) && snapshot.users.length > 0) {
+      setItem(STORAGE_KEYS.USERS, snapshot.users);
+    }
+    if (incomingUpdatedAt > 0) {
+      lastKnownUpdatedAt = incomingUpdatedAt;
+      localStorage.setItem(STORAGE_KEYS.LAST_UPDATED, String(incomingUpdatedAt));
+    }
+
+    // Jika server membagikan kredensial Supabase dan browser ini belum terhubung, otomatis hubungkan!
+    if (
+      snapshot.supabase_config?.url &&
+      snapshot.supabase_config?.key &&
+      !isSupabaseActive()
+    ) {
+      saveCustomSupabaseConfig(snapshot.supabase_config.url, snapshot.supabase_config.key);
+    }
+
+    if (notifyEvents) {
+      realtimeBus.notify('supabase_synced');
+      realtimeBus.notify('school_updated');
+      realtimeBus.notify('periods_updated');
+      realtimeBus.notify('committees_updated');
+      realtimeBus.notify('candidates_updated');
+      realtimeBus.notify('voters_updated');
+      realtimeBus.notify('vote_casted');
+      realtimeBus.notify('users_updated');
+    }
+    return true;
+  } finally {
+    isSyncingRemote = false;
+  }
+}
+
+// Sinkronisasi ke Server Backend (/api/state) untuk pengguna AI Studio lintas akun
+export async function pushStateToServer(): Promise<void> {
+  if (isSyncingRemote) return;
+  try {
+    const snapshot = buildFullSnapshot();
+    await fetch('/api/state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(snapshot),
+    });
+  } catch {
+    // Abaikan jika berjalan di static hosting murni tanpa endpoint /api/state
+  }
+}
+
+export async function pullStateFromServer(forceApply = false): Promise<boolean> {
+  try {
+    const res = await fetch('/api/state', {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    });
+    if (!res.ok) return false;
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) return false;
+
+    const json = await res.json();
+    if (!json?.ok) return false;
+
+    if (json.supabase_config?.url && json.supabase_config?.key && !isSupabaseActive()) {
+      saveCustomSupabaseConfig(json.supabase_config.url, json.supabase_config.key);
+    }
+
+    if (json.hasState && json.state) {
+      const remoteUpdatedAt = Number(json.state.updated_at || 0);
+      const localUpdatedAt = getLocalUpdatedAt();
+      if (forceApply || remoteUpdatedAt > localUpdatedAt) {
+        return applyFullSnapshot(json.state, true);
+      }
+    } else if (!json.hasState) {
+      // Server belum punya state awal, unggah state bersih saat ini ke server
+      await pushStateToServer();
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+// Simpan Snapshot JSON Lengkap ke Supabase (agar kolom tambahan seperti Jadwal Pemilihan, Kunci Bilik, KTP/KK & Unsur Jamaah tersinkronisasi 100% antar akun)
+async function saveCloudSnapshotToSupabase(): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase || isSyncingRemote) return;
+  try {
+    const snapshot = buildFullSnapshot();
+    await supabase.from('audit_logs').upsert({
+      id: CLOUD_SNAPSHOT_ID,
+      election_period_id: 'system_snapshot',
+      user_id: 'system',
+      user_role: 'System Cloud Sync',
+      action: 'CLOUD_STATE_SNAPSHOT',
+      details: JSON.stringify(snapshot),
+      ip_address: '127.0.0.1',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.warn('Failed to save cloud snapshot to Supabase:', err);
+  }
+}
+
+// Fungsi pemicu sinkronisasi otomatis setiap kali ada perubahan CRUD
+function triggerPersistAndCloudSync(): void {
+  if (isSyncingRemote) return;
+  markLocalUpdated();
+  pushStateToServer();
+  if (isSupabaseActive()) {
+    saveCloudSnapshotToSupabase();
+  }
+}
+
 // Fungsi untuk mengunggah seluruh data Masjid Nurul Hidayah ke Supabase
 export async function pushDataToSupabase(): Promise<{ success: boolean; message: string }> {
   const supabase = getSupabase();
@@ -994,14 +1188,16 @@ export async function pushDataToSupabase(): Promise<{ success: boolean; message:
   }
 
   try {
+    markLocalUpdated();
     const school = getItem(STORAGE_KEYS.SCHOOL, DEFAULT_SCHOOL);
     const periods = getItem(STORAGE_KEYS.PERIODS, DEFAULT_PERIODS);
     const committees = getItem(STORAGE_KEYS.COMMITTEES, DEFAULT_COMMITTEES);
     const candidates = getItem(STORAGE_KEYS.CANDIDATES, DEFAULT_CANDIDATES);
     const voters = getItem(STORAGE_KEYS.VOTERS, generateInitialVoters());
+    const votes = getItem(STORAGE_KEYS.VOTES, generateInitialVotes());
     const users = getItem(STORAGE_KEYS.USERS, DEFAULT_USERS);
 
-    // 1. Upsert School (hanya kolom standar tabel schools agar tidak error jika tabel lama belum di-alter)
+    // 1. Upsert School
     await supabase.from('schools').upsert({
       id: school.id,
       name: school.name,
@@ -1013,7 +1209,8 @@ export async function pushDataToSupabase(): Promise<{ success: boolean; message:
       principal_nip: school.principal_nip,
     });
 
-    // 2. Upsert Periods
+    // 2. Upsert Periods & hapus periode dummy lama
+    await supabase.from('election_periods').delete().eq('id', 'period-2023');
     if (periods.length > 0) {
       await supabase.from('election_periods').upsert(periods);
     }
@@ -1028,7 +1225,7 @@ export async function pushDataToSupabase(): Promise<{ success: boolean; message:
       await supabase.from('candidates').upsert(candidates);
     }
 
-    // 5. Upsert Voters (map ke kolom tabel voters standar agar aman)
+    // 5. Upsert Voters
     if (voters.length > 0) {
       const dbVoters = voters.map((v) => ({
         id: v.id,
@@ -1045,7 +1242,28 @@ export async function pushDataToSupabase(): Promise<{ success: boolean; message:
       await supabase.from('voters').upsert(dbVoters);
     }
 
-    // 6. Upsert Users
+    // 6. Bersihkan suara simulasi lama di Supabase jika local votes kosong
+    if (votes.length === 0) {
+      await supabase
+        .from('votes')
+        .delete()
+        .in('id', [
+          'vote-1',
+          'vote-2',
+          'vote-3',
+          'vote-4',
+          'vote-5',
+          'vote-6',
+          'vote-7',
+          'vote-8',
+          'vote-9',
+          'vote-10',
+        ]);
+    } else {
+      await supabase.from('votes').upsert(votes);
+    }
+
+    // 7. Upsert Users
     if (users.length > 0) {
       const dbUsers = users.map((u) => ({
         id: u.id,
@@ -1053,17 +1271,21 @@ export async function pushDataToSupabase(): Promise<{ success: boolean; message:
         email: u.email,
         username: u.username,
         role: u.role,
-        password: u.password || 'dkmnh12345',
+        password: u.password || 'dkm12345',
         status: u.status,
       }));
       await supabase.from('users').upsert(dbUsers);
     }
 
+    // 8. Simpan snapshot lengkap (termasuk Jadwal Pemilihan, Kunci Bilik, Unsur Jamaah & KTP/KK)
+    await saveCloudSnapshotToSupabase();
+    await pushStateToServer();
+
     realtimeBus.notify('supabase_synced');
     return {
       success: true,
       message:
-        'Berhasil mengunggah seluruh data Masjid Nurul Hidayah (Profil, 27 Jamaah RT.03-05 Lk.II, Paslon & Akun) ke Cloud Supabase!',
+        'Berhasil menyinkronkan seluruh data Masjid Nurul Hidayah (Profil, Jadwal, Bilik Suara, DPT Jamaah, Kandidat & Akun) ke Cloud secara Real-Time!',
     };
   } catch (err) {
     console.warn('Error pushing to Supabase:', err);
@@ -1089,6 +1311,7 @@ export async function syncFromSupabase(): Promise<boolean> {
       votesRes,
       logsRes,
       usersRes,
+      snapshotRes,
     ] = await Promise.all([
       supabase.from('schools').select('*').limit(1).maybeSingle(),
       supabase.from('election_periods').select('*').order('created_at', { ascending: false }),
@@ -1096,12 +1319,17 @@ export async function syncFromSupabase(): Promise<boolean> {
       supabase.from('candidates').select('*').order('ballot_number', { ascending: true }),
       supabase.from('voters').select('*'),
       supabase.from('votes').select('*'),
-      supabase.from('audit_logs').select('*').order('timestamp', { ascending: false }).limit(300),
+      supabase
+        .from('audit_logs')
+        .select('*')
+        .neq('id', CLOUD_SNAPSHOT_ID)
+        .order('timestamp', { ascending: false })
+        .limit(200),
       supabase.from('users').select('*'),
+      supabase.from('audit_logs').select('*').eq('id', CLOUD_SNAPSHOT_ID).maybeSingle(),
     ]);
 
-    // Jika di Supabase tabel voters masih kosong (baru jalankan CREATE TABLE) atau masih tersimpan nama lama,
-    // otomatis unggah data lengkap DKM Nurul Hidayah 2026 - 2028 ke Supabase!
+    // Jika di Supabase tabel voters masih kosong atau masih tersimpan nama contoh lama, unggah otomatis!
     if (
       !votersRes.data ||
       votersRes.data.length === 0 ||
@@ -1115,72 +1343,137 @@ export async function syncFromSupabase(): Promise<boolean> {
       return true;
     }
 
-    if (schoolRes.data) {
-      const currentLocal = getItem(STORAGE_KEYS.SCHOOL, DEFAULT_SCHOOL);
-      setItem(STORAGE_KEYS.SCHOOL, {
-        ...currentLocal,
-        ...schoolRes.data,
-      });
+    // Parse snapshot lengkap jika tersedia di Cloud
+    let cloudSnap: any = null;
+    if (snapshotRes.data?.details) {
+      try {
+        cloudSnap = JSON.parse(snapshotRes.data.details);
+      } catch {
+        cloudSnap = null;
+      }
     }
-    if (periodsRes.data && periodsRes.data.length > 0) {
-      const normalizedPeriods = periodsRes.data.map((p: ElectionPeriod) => {
-        if (p.id === 'period-2026') {
-          return {
-            ...p,
-            period_name: 'Pemilihan Ketua Dewan Kemakmuran Masjid (DKM) Nurul Hidayah',
-            academic_year: '2026 - 2028',
-          };
-        }
-        return p;
-      });
-      setItem(STORAGE_KEYS.PERIODS, normalizedPeriods);
-    }
-    if (committeesRes.data && committeesRes.data.length > 0) {
-      setItem(STORAGE_KEYS.COMMITTEES, committeesRes.data);
-    }
-    if (candidatesRes.data && candidatesRes.data.length > 0) {
-      const singleCandidates = candidatesRes.data.map((c: Candidate) => ({
-        ...c,
-        vice_chairman_name: '',
-        vice_chairman_class: '',
-      }));
-      setItem(STORAGE_KEYS.CANDIDATES, singleCandidates);
-    }
-    if (votersRes.data && votersRes.data.length > 0) {
-      // Pertahankan metadata KTP lokal jika kolom tambahan belum ada di tabel Supabase
-      const localVoters = getItem<Voter[]>(STORAGE_KEYS.VOTERS, generateInitialVoters());
-      const mergedVoters = votersRes.data.map((remoteVoter: Voter) => {
-        const localMatch = localVoters.find(
-          (lv) => lv.id === remoteVoter.id || lv.nisn === remoteVoter.nisn
+
+    isSyncingRemote = true;
+    try {
+      if (schoolRes.data) {
+        const currentLocal = getItem(STORAGE_KEYS.SCHOOL, DEFAULT_SCHOOL);
+        setItem(STORAGE_KEYS.SCHOOL, {
+          ...currentLocal,
+          ...(cloudSnap?.school || {}),
+          ...schoolRes.data,
+          // Pastikan kolom extended dari snapshot tetap terjaga
+          voting_basis: cloudSnap?.school?.voting_basis ?? currentLocal.voting_basis,
+          lingkungan_name: cloudSnap?.school?.lingkungan_name ?? currentLocal.lingkungan_name,
+          booth_lock_mode: cloudSnap?.school?.booth_lock_mode ?? currentLocal.booth_lock_mode,
+          voting_start_datetime:
+            cloudSnap?.school?.voting_start_datetime ?? currentLocal.voting_start_datetime,
+          voting_end_datetime:
+            cloudSnap?.school?.voting_end_datetime ?? currentLocal.voting_end_datetime,
+          voting_location: cloudSnap?.school?.voting_location ?? currentLocal.voting_location,
+        });
+      }
+      if (periodsRes.data && periodsRes.data.length > 0) {
+        const normalizedPeriods = periodsRes.data
+          .filter((p: ElectionPeriod) => p.id !== 'period-2023')
+          .map((p: ElectionPeriod) => {
+            if (p.id === 'period-2026') {
+              return {
+                ...p,
+                period_name: 'Pemilihan Ketua Dewan Kemakmuran Masjid (DKM) Nurul Hidayah',
+                academic_year: '2026 - 2028',
+              };
+            }
+            return p;
+          });
+        setItem(
+          STORAGE_KEYS.PERIODS,
+          normalizedPeriods.length > 0 ? normalizedPeriods : DEFAULT_PERIODS
         );
-        return {
-          ...localMatch,
-          ...remoteVoter,
-        };
-      });
-      setItem(STORAGE_KEYS.VOTERS, mergedVoters);
-    }
-    if (votesRes.data) {
-      setItem(STORAGE_KEYS.VOTES, votesRes.data);
-    }
-    if (logsRes.data && logsRes.data.length > 0) {
-      setItem(STORAGE_KEYS.AUDIT_LOGS, logsRes.data);
-    }
-    if (usersRes.data && usersRes.data.length > 0) {
-      setItem(STORAGE_KEYS.USERS, usersRes.data);
+      }
+      if (committeesRes.data && committeesRes.data.length > 0) {
+        setItem(STORAGE_KEYS.COMMITTEES, committeesRes.data);
+      }
+      if (candidatesRes.data && candidatesRes.data.length > 0) {
+        const singleCandidates = candidatesRes.data.map((c: Candidate) => ({
+          ...c,
+          vice_chairman_name: '',
+          vice_chairman_class: '',
+          video_url: c.video_url && c.video_url.includes('dQw4w9WgXcQ') ? '' : c.video_url,
+        }));
+        setItem(STORAGE_KEYS.CANDIDATES, singleCandidates);
+      }
+      if (votersRes.data && votersRes.data.length > 0) {
+        const localVoters = getItem<Voter[]>(STORAGE_KEYS.VOTERS, generateInitialVoters());
+        const snapVoters: Voter[] = Array.isArray(cloudSnap?.voters) ? cloudSnap.voters : [];
+
+        const mergedVoters = votersRes.data.map((remoteVoter: Voter) => {
+          const snapMatch = snapVoters.find(
+            (sv) => sv.id === remoteVoter.id || sv.nisn === remoteVoter.nisn
+          );
+          const localMatch = localVoters.find(
+            (lv) => lv.id === remoteVoter.id || lv.nisn === remoteVoter.nisn
+          );
+          const base = {
+            ...localMatch,
+            ...snapMatch,
+            ...remoteVoter,
+          };
+          return {
+            ...base,
+            unsur: normalizeUnsurJamaah(snapMatch?.unsur || remoteVoter.unsur || localMatch?.unsur),
+          };
+        });
+        setItem(STORAGE_KEYS.VOTERS, mergedVoters);
+      }
+      if (votesRes.data) {
+        const dummyVoteIds = new Set([
+          'vote-1',
+          'vote-2',
+          'vote-3',
+          'vote-4',
+          'vote-5',
+          'vote-6',
+          'vote-7',
+          'vote-8',
+          'vote-9',
+          'vote-10',
+        ]);
+        const validVotes = votesRes.data.filter((v: Vote) => !dummyVoteIds.has(v.id));
+        setItem(STORAGE_KEYS.VOTES, validVotes);
+      }
+      if (logsRes.data && logsRes.data.length > 0) {
+        setItem(
+          STORAGE_KEYS.AUDIT_LOGS,
+          logsRes.data.filter((l: AuditLog) => l.id !== CLOUD_SNAPSHOT_ID)
+        );
+      }
+      if (usersRes.data && usersRes.data.length > 0) {
+        setItem(STORAGE_KEYS.USERS, usersRes.data);
+      }
+      if (cloudSnap?.updated_at) {
+        lastKnownUpdatedAt = Number(cloudSnap.updated_at);
+        localStorage.setItem(STORAGE_KEYS.LAST_UPDATED, String(lastKnownUpdatedAt));
+      }
+    } finally {
+      isSyncingRemote = false;
     }
 
     realtimeBus.notify('supabase_synced');
     realtimeBus.notify('school_updated');
     realtimeBus.notify('periods_updated');
+    realtimeBus.notify('committees_updated');
     realtimeBus.notify('voters_updated');
     realtimeBus.notify('candidates_updated');
+    realtimeBus.notify('vote_casted');
+    realtimeBus.notify('users_updated');
     return true;
   } catch (err) {
     console.warn('Gagal sinkronisasi data dari Supabase:', err);
     return false;
   }
 }
+
+let syncTimerStarted = false;
 
 // Inisialisasi awal saat load
 export function initializeStorage(): void {
@@ -1223,12 +1516,53 @@ export function initializeStorage(): void {
     setItem(STORAGE_KEYS.USERS, DEFAULT_USERS);
   }
 
-  // Jika Supabase aktif, sinkronkan data & daftarkan listener WebSocket realtime
+  // Bersihkan data simulasi/dummy lama tanpa menghapus data jamaah asli
+  cleanLegacyDummyData();
+
+  // Tarik state terbaru dari server AI Studio (/api/state) jika tersedia
+  pullStateFromServer(false).then(() => {
+    if (isSupabaseActive()) {
+      syncFromSupabase();
+      setupRealtimeSubscription((table) => {
+        console.log(`[Supabase Realtime] Perubahan pada tabel: ${table}. Sinkronisasi...`);
+        syncFromSupabase();
+      });
+    }
+  });
+
+  // Jika Supabase sudah aktif, langsung sinkronkan & pasang listener
   if (isSupabaseActive()) {
     syncFromSupabase();
     setupRealtimeSubscription((table) => {
       console.log(`[Supabase Realtime] Perubahan pada tabel: ${table}. Sinkronisasi...`);
       syncFromSupabase();
+    });
+  }
+
+  // Jalankan polling sinkronisasi otomatis setiap 4 detik & saat pindah tab/window agar perubahan dari akun/perangkat lain langsung muncul Real-Time
+  if (typeof window !== 'undefined' && !syncTimerStarted) {
+    syncTimerStarted = true;
+    window.setInterval(() => {
+      pullStateFromServer(false);
+      if (isSupabaseActive()) {
+        syncFromSupabase();
+      }
+    }, 4000);
+
+    window.addEventListener('focus', () => {
+      pullStateFromServer(false);
+      if (isSupabaseActive()) {
+        syncFromSupabase();
+      }
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        pullStateFromServer(false);
+        if (isSupabaseActive()) {
+          syncFromSupabase();
+        }
+      }
     });
   }
 }
@@ -1548,18 +1882,27 @@ export const db = {
     const target = all.find((c) => c.id === id);
     all = all.filter((c) => c.id !== id);
     setItem(STORAGE_KEYS.CANDIDATES, all);
+
+    // Bersihkan suara yang terkait dengan kandidat yang dihapus
+    const allVotes = getItem<Vote[]>(STORAGE_KEYS.VOTES, generateInitialVotes()).filter(
+      (v) => v.candidate_id !== id
+    );
+    setItem(STORAGE_KEYS.VOTES, allVotes);
+
     if (target) {
       this.addAuditLog(
         'panitia',
         'Panitia Pemilihan',
         'DELETE_CANDIDATE',
-        `Menghapus calon ketua no. ${target.ballot_number}`
+        `Menghapus calon ketua no. ${target.ballot_number}: ${target.chairman_name}`
       );
     }
     realtimeBus.notify('candidates_updated', all);
+    realtimeBus.notify('vote_casted');
 
     const supabase = getSupabase();
     if (supabase) {
+      supabase.from('votes').delete().eq('candidate_id', id).then();
       supabase.from('candidates').delete().eq('id', id).then();
     }
   },
@@ -1803,9 +2146,13 @@ export const db = {
         .findIndex((vt) => vt.election_period_id === prevVoter.election_period_id);
       if (periodVoteIdx !== -1) {
         const actualIdx = allVotes.length - 1 - periodVoteIdx;
-        allVotes.splice(actualIdx, 1);
+        const [removedVote] = allVotes.splice(actualIdx, 1);
         setItem(STORAGE_KEYS.VOTES, allVotes);
         realtimeBus.notify('vote_casted', { periodId: prevVoter.election_period_id });
+        const sb = getSupabase();
+        if (sb && removedVote?.id) {
+          sb.from('votes').delete().eq('id', removedVote.id).then();
+        }
       }
       this.addAuditLog(
         'admin',
@@ -1874,8 +2221,12 @@ export const db = {
         .findIndex((vt) => vt.election_period_id === voter.election_period_id);
       if (periodVoteIdx !== -1) {
         const actualIdx = allVotes.length - 1 - periodVoteIdx;
-        allVotes.splice(actualIdx, 1);
+        const [removedVote] = allVotes.splice(actualIdx, 1);
         setItem(STORAGE_KEYS.VOTES, allVotes);
+        const sb = getSupabase();
+        if (sb && removedVote?.id) {
+          sb.from('votes').delete().eq('id', removedVote.id).then();
+        }
       }
     }
 
@@ -2289,7 +2640,9 @@ export const db = {
 
   // AUDIT TRAIL
   getAuditLogs(periodId?: string): AuditLog[] {
-    const logs = getItem<AuditLog[]>(STORAGE_KEYS.AUDIT_LOGS, DEFAULT_AUDIT_LOGS);
+    const logs = getItem<AuditLog[]>(STORAGE_KEYS.AUDIT_LOGS, DEFAULT_AUDIT_LOGS).filter(
+      (l) => l.id !== CLOUD_SNAPSHOT_ID && l.election_period_id !== 'system_snapshot'
+    );
     const targetPeriod = periodId || this.getActivePeriod()?.id;
     if (!targetPeriod) return logs;
     return logs
@@ -2297,7 +2650,9 @@ export const db = {
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   },
   addAuditLog(userId: string, userRole: string, action: string, details: string): void {
-    const logs = getItem<AuditLog[]>(STORAGE_KEYS.AUDIT_LOGS, DEFAULT_AUDIT_LOGS);
+    const logs = getItem<AuditLog[]>(STORAGE_KEYS.AUDIT_LOGS, DEFAULT_AUDIT_LOGS).filter(
+      (l) => l.id !== CLOUD_SNAPSHOT_ID
+    );
     const activePeriod = this.getActivePeriod();
     const newLog: AuditLog = {
       id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
@@ -2318,6 +2673,9 @@ export const db = {
     if (supabase) {
       supabase.from('audit_logs').insert(newLog).then();
     }
+
+    // Sinkronkan seluruh state ke server (/api/state) & Cloud Snapshot Supabase secara otomatis
+    triggerPersistAndCloudSync();
   },
 
   // MANAJEMEN USER SISTEM (ADMIN & PANITIA)
@@ -2565,6 +2923,7 @@ export const db = {
     localStorage.removeItem(STORAGE_KEYS.AUDIT_LOGS);
     localStorage.removeItem(STORAGE_KEYS.USERS);
     initializeStorage();
+    triggerPersistAndCloudSync();
     if (isSupabaseActive()) {
       pushDataToSupabase();
     }

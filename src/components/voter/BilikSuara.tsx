@@ -65,7 +65,6 @@ export const BilikSuara: React.FC<BilikSuaraProps> = ({
   // Voting State
   const [currentStep, setCurrentStep] = useState<VotingStep>('AUTH');
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [unvotedSample, setUnvotedSample] = useState<Voter[]>([]);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [detailModalCand, setDetailModalCand] = useState<Candidate | null>(null);
@@ -77,8 +76,6 @@ export const BilikSuara: React.FC<BilikSuaraProps> = ({
   const loadBoothData = () => {
     if (activePeriod) {
       setCandidates(db.getCandidates(activePeriod.id));
-      const allVoters = db.getVoters(activePeriod.id);
-      setUnvotedSample(allVoters.filter((v) => !v.has_voted).slice(0, 6));
     }
   };
 

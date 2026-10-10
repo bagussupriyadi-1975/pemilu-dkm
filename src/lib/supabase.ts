@@ -1,19 +1,29 @@
 import { createClient, SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 
+// Otomatis tangkap parameter ?sb_url=...&sb_key=... dari URL jika dibuka di perangkat/akun lain
+try {
+  if (typeof window !== 'undefined' && window.location && window.location.search) {
+    const params = new URLSearchParams(window.location.search);
+    const urlParam = (params.get('sb_url') || '').trim();
+    const keyParam = (params.get('sb_key') || '').trim();
+    if (urlParam && keyParam && urlParam.startsWith('http')) {
+      localStorage.setItem('epilketos_custom_supabase_url', urlParam);
+      localStorage.setItem('epilketos_custom_supabase_key', keyParam);
+      // Bersihkan query string dari address bar setelah tersimpan
+      params.delete('sb_url');
+      params.delete('sb_key');
+      const cleanSearch = params.toString();
+      const newUrl =
+        window.location.pathname + (cleanSearch ? `?${cleanSearch}` : '') + window.location.hash;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }
+} catch {
+  // ignore
+}
+
 // Baca URL dan Anon Key dari Environment Variables atau LocalStorage
 export function getSupabaseConfig(): { url: string; key: string; isConfigured: boolean; source: 'env' | 'custom' | 'none' } {
-  const envUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
-  const envKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
-
-  if (envUrl && envKey && envUrl.startsWith('http')) {
-    return {
-      url: envUrl,
-      key: envKey,
-      isConfigured: true,
-      source: 'env',
-    };
-  }
-
   const customUrl = (localStorage.getItem('epilketos_custom_supabase_url') || '').trim();
   const customKey = (localStorage.getItem('epilketos_custom_supabase_key') || '').trim();
 
@@ -23,6 +33,18 @@ export function getSupabaseConfig(): { url: string; key: string; isConfigured: b
       key: customKey,
       isConfigured: true,
       source: 'custom',
+    };
+  }
+
+  const envUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+  const envKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+
+  if (envUrl && envKey && envUrl.startsWith('http')) {
+    return {
+      url: envUrl,
+      key: envKey,
+      isConfigured: true,
+      source: 'env',
     };
   }
 

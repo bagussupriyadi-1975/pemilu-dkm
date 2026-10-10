@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../../lib/storage';
+import { db, pushStateToServer } from '../../lib/storage';
 import { saveCustomSupabaseConfig, clearCustomSupabaseConfig } from '../../lib/supabase';
 import {
   Database,
@@ -18,6 +18,8 @@ import {
   UploadCloud,
   Table,
   ListChecks,
+  Share2,
+  Link2,
 } from 'lucide-react';
 
 export const SupabaseSettings: React.FC = () => {
@@ -47,6 +49,9 @@ export const SupabaseSettings: React.FC = () => {
   } | null>(null);
 
   const [copiedSql, setCopiedSql] = useState(false);
+  const [copiedVercelLink, setCopiedVercelLink] = useState(false);
+  const [copiedCurrentLink, setCopiedCurrentLink] = useState(false);
+  const [copiedEnvVars, setCopiedEnvVars] = useState(false);
   const [showSqlViewer, setShowSqlViewer] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -110,6 +115,7 @@ export const SupabaseSettings: React.FC = () => {
     }
 
     saveCustomSupabaseConfig(urlInput.trim(), keyInput.trim());
+    await pushStateToServer();
     setSaveSuccessMsg(true);
     setTimeout(() => setSaveSuccessMsg(false), 3500);
 
@@ -121,6 +127,7 @@ export const SupabaseSettings: React.FC = () => {
     setTestResult(res);
     setIsTesting(false);
     if (res.success) {
+      await db.pushDataToSupabase();
       await handleInspectTables();
     }
   };
@@ -402,7 +409,111 @@ SELECT id, name, principal_name, address FROM public.schools;`;
         {saveSuccessMsg && (
           <div className="mt-4 p-3.5 rounded-xl border bg-emerald-50 border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Kredensial Supabase berhasil disimpan dan diaktifkan.</span>
+            <span>Kredensial Supabase berhasil disimpan, diunggah ke Cloud &amp; dibagikan ke seluruh sesi.</span>
+          </div>
+        )}
+      </div>
+
+      {/* PANEL SINKRONISASI LINTAS AKUN / PERANGKAT (AI STUDIO & VERCEL) */}
+      <div className="bg-gradient-to-br from-emerald-950 via-emerald-900 to-slate-900 text-white p-6 rounded-2xl border border-emerald-700/60 shadow-md space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[11px] font-black uppercase tracking-wider">
+              <Share2 className="w-3.5 h-3.5" />
+              Solusi Sinkronisasi Real-Time Lintas Akun &amp; Perangkat
+            </span>
+            <h4 className="text-sm sm:text-base font-black text-white mt-1.5">
+              Mengapa perubahan di Akun A sebelumnya tidak muncul saat dibuka di Akun B (Vercel / AI Studio)?
+            </h4>
+            <p className="text-xs text-emerald-100/90 mt-1 leading-relaxed">
+              Karena ketika Anda mengisi URL &amp; Anon Key Supabase melalui form di browser Akun A, kredensial tersebut tersimpan di memori browser Akun A. Saat Anda membuka link <strong>Vercel (pemilu-dkm.vercel.app)</strong> di Akun B / HP lain, browser Akun B belum memiliki kunci koneksi Supabase tersebut kecuali dihubungkan melalui <strong>Tautan Sinkronisasi 1-Klik</strong> di bawah ini atau dipasang di <strong>Environment Variables Vercel</strong>. (Untuk link <strong>AI Studio</strong>, kini server otomatis membagikan sinkronisasi ke semua akun tanpa perlu setting ulang).
+            </p>
+          </div>
+        </div>
+
+        {supabaseStatus.isActive && urlInput && keyInput ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+            {/* Cara 1: Link Sinkronisasi Otomatis 1-Klik */}
+            <div className="bg-white/10 backdrop-blur-xs border border-white/15 rounded-xl p-4 space-y-2.5">
+              <div className="flex items-center gap-2 text-amber-300 font-extrabold text-xs uppercase tracking-wider">
+                <Link2 className="w-4 h-4 shrink-0" />
+                <span>Cara 1 (Instan): Bagikan Link Sinkronisasi 1-Klik</span>
+              </div>
+              <p className="text-[11px] text-emerald-100 leading-relaxed">
+                Buka atau bagikan link ini ke akun/HP lain. Begitu dibuka sekali saja, perangkat tersebut <strong>otomatis menyimpan koneksi Cloud Supabase Anda</strong> dan langsung tersinkronisasi Real-Time:
+              </p>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const magicVercelUrl = `https://pemilu-dkm.vercel.app/?sb_url=${encodeURIComponent(
+                      urlInput.trim()
+                    )}&sb_key=${encodeURIComponent(keyInput.trim())}`;
+                    navigator.clipboard.writeText(magicVercelUrl);
+                    setCopiedVercelLink(true);
+                    setTimeout(() => setCopiedVercelLink(false), 3000);
+                  }}
+                  className="px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs flex items-center gap-1.5 cursor-pointer transition-all"
+                >
+                  {copiedVercelLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>
+                    {copiedVercelLink
+                      ? 'Link Vercel Tersalin!'
+                      : 'Salin Link Auto-Sync Vercel (pemilu-dkm.vercel.app)'}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const magicOriginUrl = `${window.location.origin}/?sb_url=${encodeURIComponent(
+                      urlInput.trim()
+                    )}&sb_key=${encodeURIComponent(keyInput.trim())}`;
+                    navigator.clipboard.writeText(magicOriginUrl);
+                    setCopiedCurrentLink(true);
+                    setTimeout(() => setCopiedCurrentLink(false), 3000);
+                  }}
+                  className="px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all"
+                >
+                  {copiedCurrentLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>
+                    {copiedCurrentLink ? 'Link Tersalin!' : 'Salin Link Auto-Sync Domain Ini'}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Cara 2: Pasang Permanen di Vercel Environment Variables */}
+            <div className="bg-white/10 backdrop-blur-xs border border-white/15 rounded-xl p-4 space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-emerald-300 font-extrabold text-xs uppercase tracking-wider">
+                  Cara 2 (Permanen di Vercel / GitHub):
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const envText = `VITE_SUPABASE_URL=${urlInput.trim()}\nVITE_SUPABASE_ANON_KEY=${keyInput.trim()}`;
+                    navigator.clipboard.writeText(envText);
+                    setCopiedEnvVars(true);
+                    setTimeout(() => setCopiedEnvVars(false), 3000);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+                >
+                  {copiedEnvVars ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  <span>{copiedEnvVars ? 'Tersalin!' : 'Salin .env'}</span>
+                </button>
+              </div>
+              <p className="text-[11px] text-emerald-100 leading-relaxed">
+                Agar <strong>https://pemilu-dkm.vercel.app/</strong> otomatis terhubung di semua HP jamaah tanpa link khusus, tempelkan 2 variabel ini di <strong>Vercel Dashboard &rarr; Project Settings &rarr; Environment Variables</strong> lalu klik <strong>Redeploy</strong>:
+              </p>
+              <pre className="p-2.5 rounded-lg bg-slate-950/90 border border-slate-800 text-[10px] font-mono text-emerald-300 overflow-x-auto">
+                {`VITE_SUPABASE_URL=${urlInput.trim()}\nVITE_SUPABASE_ANON_KEY=${keyInput.trim().slice(0, 28)}...`}
+              </pre>
+            </div>
+          </div>
+        ) : (
+          <div className="p-3.5 rounded-xl bg-amber-500/20 border border-amber-400/40 text-xs text-amber-200 font-medium">
+            Untuk mengaktifkan sinkronisasi lintas perangkat di Vercel, masukkan <strong>Project URL</strong> dan <strong>Anon Key Supabase</strong> Anda pada formulir di bawah, lalu klik <strong>Simpan &amp; Hubungkan Database</strong>.
           </div>
         )}
       </div>
