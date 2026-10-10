@@ -487,7 +487,7 @@ SELECT id, name, principal_name, address FROM public.schools;`;
             <div className="bg-white/10 backdrop-blur-xs border border-white/15 rounded-xl p-4 space-y-2.5">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-emerald-300 font-extrabold text-xs uppercase tracking-wider">
-                  Cara 2 (Permanen di Vercel / GitHub):
+                  Cara 2 (Permanen di Dashboard Vercel.com):
                 </span>
                 <button
                   type="button"
@@ -500,15 +500,38 @@ SELECT id, name, principal_name, address FROM public.schools;`;
                   className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
                 >
                   {copiedEnvVars ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                  <span>{copiedEnvVars ? 'Tersalin!' : 'Salin .env'}</span>
+                  <span>{copiedEnvVars ? 'Tersalin Semua!' : 'Salin Format .env'}</span>
                 </button>
               </div>
               <p className="text-[11px] text-emerald-100 leading-relaxed">
-                Agar <strong>https://pemilu-dkm.vercel.app/</strong> otomatis terhubung di semua HP jamaah tanpa link khusus, tempelkan 2 variabel ini di <strong>Vercel Dashboard &rarr; Project Settings &rarr; Environment Variables</strong> lalu klik <strong>Redeploy</strong>:
+                Di halaman <strong>Environment Variables</strong> (di dashboard <strong>vercel.com</strong>), masukkan 2 baris variabel berikut (bisa langsung klik Salin Format .env lalu Paste di kotak Key Vercel, atau isi satu per satu), lalu klik <strong>Save</strong> dan lakukan <strong>Redeploy</strong>:
               </p>
-              <pre className="p-2.5 rounded-lg bg-slate-950/90 border border-slate-800 text-[10px] font-mono text-emerald-300 overflow-x-auto">
-                {`VITE_SUPABASE_URL=${urlInput.trim()}\nVITE_SUPABASE_ANON_KEY=${keyInput.trim().slice(0, 28)}...`}
-              </pre>
+              <div className="space-y-1.5 text-[10px] font-mono bg-slate-950/90 p-2.5 rounded-lg border border-slate-800">
+                <div className="flex items-center justify-between gap-2 text-emerald-300">
+                  <span className="truncate">
+                    <strong>Key 1:</strong> VITE_SUPABASE_URL
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(urlInput.trim())}
+                    className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white font-sans font-bold cursor-pointer shrink-0"
+                  >
+                    Salin Value URL
+                  </button>
+                </div>
+                <div className="flex items-center justify-between gap-2 text-amber-300 pt-1 border-t border-slate-800/80">
+                  <span className="truncate">
+                    <strong>Key 2:</strong> VITE_SUPABASE_ANON_KEY
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(keyInput.trim())}
+                    className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white font-sans font-bold cursor-pointer shrink-0"
+                  >
+                    Salin Value Key
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         ) : (
